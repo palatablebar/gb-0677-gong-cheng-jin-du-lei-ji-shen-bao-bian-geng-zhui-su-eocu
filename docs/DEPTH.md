@@ -13,6 +13,7 @@
 | M5 扣回核算 | 查看并运行扣回核算 | `/api/deductions` | `app/modules/m5_deductions/rules.py` | `tests/test_m5.py` |
 | M6 进度对账 | 查看并运行进度对账 | `/api/valuation` | `app/modules/m6_valuation/rules.py` | `tests/test_m6.py` |
 | M7 签证归档 | 查看并运行签证归档 | `/api/certificates` | `app/modules/m7_certificates/rules.py` | `tests/test_m7.py` |
+| M8 节点付款 | 查看并运行节点付款 | `/api/milestones` | `app/modules/m8_milestones/rules.py` | `tests/test_m8.py` |
 
 ## 陷阱登记
 
@@ -30,6 +31,10 @@
 | TRAP-07 | 累计量空值 | 按零冲回 | 隔离缺失 | `app/values.py` | `tests/test_m2.py::test_real_null_not_zero` |
 | TRAP-10 | 分币舍入 | 浮点误差 | 分项量化后净额守恒 | `app/modules/m5_deductions/rules.py` | `tests/test_m5.py::test_fraction_rounds_to_cent` |
 | TRAP-23 | 变更生效边界 | 旧价覆盖 | 按周期选择已批版本 | `app/modules/m3_changes/rules.py` | `tests/test_m3.py::test_effective_boundary` |
+| TRAP-30 | 节点重复付款 | 按累计量重算全部节点 | 付款台账唯一约束，同节点重跑只付一次 | `app/store.py` | `tests/test_m8.py::test_rerun_same_input_is_idempotent` |
+| TRAP-31 | 补量倒改已签证 | 用现场补报量重签历史节点 | 节点跨越只认本期已签认累计量，历史节点标记已付不重发 | `app/modules/m8_milestones/rules.py` | `tests/test_m8.py::test_historical_nodes_paid_once_not_reissued` |
+| TRAP-32 | 切换失败污染签证 | 新批次写一半覆盖旧签证 | 批次与台账同一事务，冲突整体回滚保留旧签证 | `app/store.py` | `tests/test_m8.py::test_ledger_conflict_rolls_back_and_keeps_old_visa` |
+| TRAP-33 | 比例浮点误判 | 浮点比较导致边界错跨 | Decimal计算完成比例，阈值按`ratio>=threshold`判定 | `app/modules/m8_milestones/rules.py` | `tests/test_m8.py::test_exact_threshold_only_n1` |
 
 ## 对账规则
 

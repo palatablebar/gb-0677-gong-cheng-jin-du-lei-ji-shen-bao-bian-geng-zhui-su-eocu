@@ -1,9 +1,20 @@
 from flask import Flask,jsonify,request,send_from_directory
-from app.config import ROOT,DATA_DIR,MODULES
+from app.config import ROOT,DATA_DIR,MODULES,SAMPLES
 from app.errors import DomainError
 from app import pipeline,store
 from app.web import register_pages
 import importlib
+# 节点付款演示批：台账为空时，以参数声明历史已签证节点，演示“只付一次、不倒改”。
+SAMPLE_PARAMETERS={
+    "milestone.csv":{
+        "paid_milestones":{"001":["N1","N2","N3"],"002":["N1","N2","N3"]},
+        "contract_qty":{"001":"500","002":"500"},
+    },
+}
+def resolve_sample(name,parameters):
+    if name=="milestone.csv" and not parameters:
+        return dict(SAMPLE_PARAMETERS["milestone.csv"])
+    return parameters
 def create_app():
     application=Flask(__name__,template_folder="templates",static_folder="static")
     application.config["MAX_CONTENT_LENGTH"]=4*1024*1024
@@ -25,7 +36,10 @@ def create_app():
         if not isinstance(params,dict): raise DomainError("BAD_PARAMETERS","参数需要对象")
         raw=payload.get("csv")
         if raw is not None and not isinstance(raw,str): raise DomainError("BAD_CSV","CSV需要文本")
-        return pipeline.execute(raw.encode() if raw is not None else pipeline.load_sample(payload.get("sample","dirty.csv")),params)
+        sample=payload.get("sample","dirty.csv")
+        if sample not in SAMPLES: raise DomainError("BAD_SAMPLE","样例不存在",404)
+        parameters=resolve_sample(sample,params)
+        return pipeline.execute(raw.encode() if raw is not None else pipeline.load_sample(sample),parameters)
     @application.post("/api/upload")
     def upload():
         file=request.files.get("file")

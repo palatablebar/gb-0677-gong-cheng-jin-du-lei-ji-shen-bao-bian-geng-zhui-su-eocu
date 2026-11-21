@@ -1,0 +1,63 @@
+{% extends 'base.html' %}{% block body %}
+<div class="grid">
+  <section class="panel">
+    <div class="receipt">
+      <div><div class="serial">{{run.run_id|upper}}</div><strong>{{modules[index][1]}}签证</strong></div>
+      <span class="serial">{{rows|length}} 个新增节点 / 人民币元</span>
+    </div>
+    <div class="panel__body ruling-box">
+      <b>节点跨越裁决</b>
+      <p>{{run.stages[7].metrics.ruling}}</p>
+      <small>本期新增节点：{{run.stages[7].metrics.new_milestone_keys|join('、') if run.stages[7].metrics.new_milestone_keys else '无'}}</small>
+    </div>
+    <div class="panel__body inputs"><input id="lookup" placeholder="查找清单项或节点编号" aria-label="查找节点"></div>
+    <div class="table-scroll">
+      <table class="ledger">
+        <thead><tr><th>来源</th>{% for key in columns %}<th>{{labels.get(key,key)}}</th>{% endfor %}</tr></thead>
+        <tbody id="valuation-rows">
+        {% for item in rows %}
+          <tr><td>{{item.get('_sources',[])|join('/')}}</td>
+          {% for key in columns %}<td title="{{item.get(key,'')}}">{{item.get(key,'—')}}</td>{% endfor %}</tr>
+        {% else %}
+          <tr><td class="empty">本批无新增节点可签发（历史节点只付一次）。</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="signature">
+      <span>新增节点　{{run.stages[7].metrics.new_milestones}} 个</span>
+      <span>审核　{{run.decision}}</span>
+      <span>版本　{{run.version}}</span>
+    </div>
+  </section>
+  <div class="stack">
+    <section class="panel">
+      <div class="panel__head"><h2>节点付款合计</h2><span>元</span></div>
+      <div class="panel__body">
+        {% for key in ['gross_total','retention_total','advance_total','net_total','crossed_milestones','historical_paid','new_milestones'] %}
+        <div class="audit-line"><span>{{labels.get(key,key)}}</span><b>{{run.stages[7].metrics[key]}}</b></div>
+        {% endfor %}
+      </div>
+    </section>
+    <section class="panel">
+      <div class="panel__head"><h2>节点跨越台账</h2><span>{{run.stages[7].crossings|length}}</span></div>
+      <div class="panel__body">
+        {% for c in run.stages[7].crossings %}
+        <div class="reason"><b>{{c.item}} / {{c.milestone_code}}　{{c.status}}</b><span>签认期 {{c.signed_period}} / 已签 {{c.signed_qty}} / 比例 {{c.completion_ratio}} ≥ 阈值 {{c.threshold}} / 节点额 {{c.gross_amount}}</span></div>
+        {% else %}
+        <div class="empty">尚无已跨节点。</div>
+        {% endfor %}
+      </div>
+    </section>
+    <section class="panel">
+      <div class="panel__head"><h2>待核事项</h2><span>{{stage.cumulative_quarantine|length}}</span></div>
+      <div class="panel__body">
+        {% for q in stage.cumulative_quarantine %}
+        <div class="reason"><b>{{q.reason}}</b><span>行 {{q.get('_line','—')}} / {{q.detail}}</span></div>
+        {% else %}
+        <div class="empty">无待核事项。</div>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
+</div>{% endblock %}

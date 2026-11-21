@@ -20,10 +20,13 @@ docker compose exec -T app pytest -q
 - 5. 扣回核算：`/deductions`，`/api/deductions`。
 - 6. 进度对账：`/valuation`，`/api/valuation`。
 - 7. 签证归档：`/certificates`，`/api/certificates`。
+- 8. 节点付款：`/milestones`，`/api/milestones`。
 
 ## 核心规则
 
 累计申报必须减前期已审金额，变更按审批生效版本覆盖；负进度需关联冲回证据。
+
+节点付款按累计完成比例触发：节点跨越一律以**本期已签认累计工程量**（前序审核通过、带来源行）为准，现场补量只触发高于最高已付节点的新节点；历史已签证节点由 SQLite 付款台账（`milestone_payments`，`(item,milestone_code)` 唯一）登记，只付一次，不倒改已签证。节点金额=合同总量×已签单价×节点比例，再按质保金、预付款扣回至分，输出扣回净额。批次与台账同一事务写入：台账冲突（并发或重跑）整体回滚并返回409，旧批次与旧签证原样保留；同源重跑复用同一批次，同一节点不会重复付款。
 
 ## 演示
 
